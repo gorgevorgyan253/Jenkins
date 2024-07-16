@@ -62,7 +62,7 @@ pipeline {
                 def imagename = env.IMAGE_NAME
                 sh '''#!/bin/bash
                     echo "Building Docker image: ${imagename}" # Debugging line
-                    docker build -t ${imagename} ../
+                    docker build -t ${env.IMAGE_NAME} ../
                 '''
                     } else if (env.BRANCH_NAME == 'dev') {
                         // Copy dev logo.svg and build Docker image
