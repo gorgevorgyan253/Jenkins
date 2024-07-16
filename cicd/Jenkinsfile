@@ -5,6 +5,7 @@ pipeline {
         PORT = ''
         IMAGE_NAME = ''
         CONTAINER_NAME = ''
+        IMAGE_TAG = 'v1.0'
     }
     stages {
         stage('Setup NodeJS') {
@@ -20,11 +21,11 @@ pipeline {
                 script {
                     if (env.BRANCH_NAME == 'main') {
                         PORT = '3000'
-                        IMAGE_NAME = 'nodemain:v1.0'
+                        IMAGE_NAME = 'nodemain'
                         CONTAINER_NAME = 'nodemain'
                     } else if (env.BRANCH_NAME == 'dev') {
                         PORT = '3001'
-                        IMAGE_NAME = 'nodedev:v1.0'
+                        IMAGE_NAME = 'nodedev'
                         CONTAINER_NAME = 'nodedev'
                     }
                 }
@@ -51,7 +52,7 @@ pipeline {
                 script {
                     if (env.BRANCH_NAME == 'main') {
                         // Copy main logo.svg and build Docker image
-                            docker.build("${env.IMAGE_NAME}", '../')
+                            docker.build(env.IMAGE_NAME:env.IMAGE_TAG, '../')
                  
                     } else if (env.BRANCH_NAME == 'dev') {
                         // Copy dev logo.svg and build Docker image
