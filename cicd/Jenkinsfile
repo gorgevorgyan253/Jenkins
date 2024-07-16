@@ -51,7 +51,7 @@ pipeline {
                 script {
                     if (env.BRANCH_NAME == 'main') {
                         // Copy main logo.svg and build Docker image
-                            docker.build("${env.IMAGE_NAME}", "-f Dockerfile ../")
+                            docker.build(env.IMAGE_NAME, '../')
                  
                     } else if (env.BRANCH_NAME == 'dev') {
                         // Copy dev logo.svg and build Docker image
