@@ -60,13 +60,13 @@ pipeline {
                 script {
                     if (env.BRANCH_NAME == 'main') {
                         // Copy main logo.svg and build Docker image
-                           sh 'docker build -t ${IMAGE_NAME} .'
+                           sh 'docker build -t ${IMAGE_NAME} ../'
                  
                     } else if (env.BRANCH_NAME == 'dev') {
                         // Copy dev logo.svg and build Docker image
                         sh '''
                         cp path/to/dev/logo.svg path/to/app/logo.svg
-                        docker build -t ${IMAGE_NAME} .
+                        docker build -t ${IMAGE_NAME} ../
                         '''
                     }
                 }
