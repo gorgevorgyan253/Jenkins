@@ -20,9 +20,9 @@ pipeline {
             steps {
                 script {
                     if (env.BRANCH_NAME == 'main') {
-                        PORT = '3000'
-                        IMAGE_NAME = 'nodemain'
-                        CONTAINER_NAME = 'nodemain'
+                        env.PORT = '3000'
+                        env.IMAGE_NAME = 'nodemain'
+                        env.CONTAINER_NAME = 'nodemain'
                     } else if (env.BRANCH_NAME == 'dev') {
                         env.PORT = '3001'
                         env.IMAGE_NAME = 'nodedev'
@@ -46,57 +46,49 @@ pipeline {
                 }
             }
         }
-                stage('Setup Docker') {
+        stage('Setup Docker') {
             steps {
                 script {
-                    def nodeTool = tool name: 'docker'
-                    env.PATH = "${nodeTool}/bin:${env.PATH}"
+                    def dockerTool = tool name: 'docker'
+                    env.PATH = "${dockerTool}/bin:${env.PATH}"
                 }
             }
-                }
+        }
         stage('Build Docker Image') {
-
             steps {
                 script {
                     if (env.BRANCH_NAME == 'main') {
-                def imagename = env.IMAGE_NAME
-                sh '''#!/bin/bash
-                    echo "Building Docker image: ${imagename}" # Debugging line
-                    docker build -t ${env.IMAGE_NAME} ../
-                '''
+                        sh '''
+                            echo "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}" # Debugging line
+                            docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                        '''
                     } else if (env.BRANCH_NAME == 'dev') {
                         // Copy dev logo.svg and build Docker image
                         sh '''
-                        cp path/to/dev/logo.svg path/to/app/logo.svg
-                        docker build -t ${IMAGE_NAME} ../
+                            cp path/to/dev/logo.svg path/to/app/logo.svg
+                            docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
                         '''
                     }
                 }
             }
         }
         stage('Deploy') {
-
-
-                // Use Docker plugin to define Docker image and run inside it
-                agent {
-                    docker {
-                        // Specify Docker image to use
-                        image 'docker' // Replace with the Docker version you need
-                        args '-v /var/run/docker.sock:/var/run/docker.sock' // Mount Docker socket
-                    }
+            agent {
+                docker {
+                    image 'docker' // Replace with the Docker version you need
+                    args '-v /var/run/docker.sock:/var/run/docker.sock' // Mount Docker socket
                 }
-
-            
+            }
             steps {
                 script {
                     // Stop and remove only the containers related to the current environment
                     sh '''
-                    docker stop $(docker ps -q --filter "name=${CONTAINER_NAME}") || true
-                    docker rm $(docker ps -a -q --filter "name=${CONTAINER_NAME}") || true
+                        docker stop $(docker ps -q --filter "name=${CONTAINER_NAME}") || true
+                        docker rm $(docker ps -a -q --filter "name=${CONTAINER_NAME}") || true
                     '''
 
                     // Run the new container
-                    sh "docker run -d --name ${CONTAINER_NAME} --expose ${PORT} -p ${PORT}:3000 ${IMAGE_NAME}"
+                    sh "docker run -d --name ${CONTAINER_NAME} --expose ${PORT} -p ${PORT}:3000 ${IMAGE_NAME}:${IMAGE_TAG}"
                 }
             }
         }
