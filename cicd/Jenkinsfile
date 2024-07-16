@@ -20,6 +20,7 @@ pipeline {
             steps {
                 script {
                      checkout scm
+                     echo "Branch name: ${env.BRANCH_NAME}" 
                     if (env.BRANCH_NAME == 'main') {
                         env.PORT = '3000'
                         env.IMAGE_NAME = 'nodemain'
