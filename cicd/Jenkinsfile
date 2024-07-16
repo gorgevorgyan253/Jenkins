@@ -20,13 +20,13 @@ pipeline {
             steps {
                 script {
                     if (env.BRANCH_NAME == 'main') {
-                        PORT = '3000'
-                        IMAGE_NAME = 'nodemain'
-                        CONTAINER_NAME = 'nodemain'
+                        env.PORT = '3000'
+                        env.IMAGE_NAME = 'nodemain'
+                        env.CONTAINER_NAME = 'nodemain'
                     } else if (env.BRANCH_NAME == 'dev') {
-                        PORT = '3001'
-                        IMAGE_NAME = 'nodedev'
-                        CONTAINER_NAME = 'nodedev'
+                        env.PORT = '3001'
+                        env.IMAGE_NAME = 'nodedev'
+                        env.CONTAINER_NAME = 'nodedev'
                     }
                 }
                 checkout scm
