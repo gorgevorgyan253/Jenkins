@@ -59,11 +59,11 @@ pipeline {
             steps {
                 script {
                     if (env.BRANCH_NAME == 'main') {
-                        // Copy main logo.svg and build Docker image
-                         def imagename = env.IMAGE_NAME
-                        sh '''#!/bin/bash
-                           docker build -t  ${imagename} ../
-                 '''
+                def imagename = env.IMAGE_NAME
+                sh '''#!/bin/bash
+                    echo "Building Docker image: ${imagename}" # Debugging line
+                    docker build -t ${imagename} ../
+                '''
                     } else if (env.BRANCH_NAME == 'dev') {
                         // Copy dev logo.svg and build Docker image
                         sh '''
