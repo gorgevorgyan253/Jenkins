@@ -51,7 +51,7 @@ pipeline {
                 agent {
                     docker {
                         // Specify Docker image to use
-                        image 'docker:19.03.13' // Replace with the Docker version you need
+                        image 'docker' // Replace with the Docker version you need
                         args '-v /var/run/docker.sock:/var/run/docker.sock' // Mount Docker socket
                     }
                 }
@@ -80,7 +80,7 @@ pipeline {
                 agent {
                     docker {
                         // Specify Docker image to use
-                        image 'docker:19.03.13' // Replace with the Docker version you need
+                        image 'docker' // Replace with the Docker version you need
                         args '-v /var/run/docker.sock:/var/run/docker.sock' // Mount Docker socket
                     }
                 }
