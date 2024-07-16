@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        NODE_VERSION = 'nodejs' // Name of your NodeJS installation in Global Tool Configuration
+        NODE_VERSION = 'node' // Name of your NodeJS installation in Global Tool Configuration
         PORT = ''
     }
     stages {
@@ -38,13 +38,13 @@ pipeline {
                     if (env.BRANCH_NAME == 'main') {
                         // Copy main logo.svg and build Docker image
                         sh '''
-                        cp path/to/main/logo.svg path/to/app/logo.svg
+                        cp ./logos/logo.svg ../src/logo.svg
                         docker build -t nodemain:v1.0 .
                         '''
                     } else if (env.BRANCH_NAME == 'dev') {
                         // Copy dev logo.svg and build Docker image
                         sh '''
-                        cp path/to/dev/logo.svg path/to/app/logo.svg
+                        cp ./logos/logo2.svg ../src/logo.svg
                         docker build -t nodedev:v1.0 .
                         '''
                     }
