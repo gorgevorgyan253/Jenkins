@@ -7,7 +7,7 @@ pipeline {
     stages {
         stage('Setup NodeJS') {
             steps {
-                tool name: env.NODE_VERSION, type: 'NodeJS'
+                tool name: env.NODE_VERSION
             }
         }
         stage('Checkout') {
