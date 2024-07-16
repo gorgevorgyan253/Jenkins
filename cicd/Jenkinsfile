@@ -3,23 +3,29 @@ pipeline {
     environment {
         NODE_VERSION = 'nodejs' // Name of your NodeJS installation in Global Tool Configuration
         PORT = ''
+        IMAGE_NAME = ''
+        CONTAINER_NAME = ''
     }
     stages {
         stage('Setup NodeJS') {
-            steps{
+            steps {
                 script {
                     def nodeTool = tool name: env.NODE_VERSION
                     env.PATH = "${nodeTool}/bin:${env.PATH}"
                 }
-        }
+            }
         }
         stage('Checkout') {
             steps {
                 script {
                     if (env.BRANCH_NAME == 'main') {
                         PORT = '3000'
+                        IMAGE_NAME = 'nodemain:v1.0'
+                        CONTAINER_NAME = 'nodemain'
                     } else if (env.BRANCH_NAME == 'dev') {
                         PORT = '3001'
+                        IMAGE_NAME = 'nodedev:v1.0'
+                        CONTAINER_NAME = 'nodedev'
                     }
                 }
                 checkout scm
@@ -27,12 +33,16 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh 'npm install'
+                script {
+                    sh 'npm install'
+                }
             }
         }
         stage('Test') {
             steps {
-                sh 'npm test'
+                script {
+                    sh 'npm test'
+                }
             }
         }
         stage('Build Docker Image') {
@@ -41,14 +51,14 @@ pipeline {
                     if (env.BRANCH_NAME == 'main') {
                         // Copy main logo.svg and build Docker image
                         sh '''
-                        cp ./logos/logo.svg ../src/logo.svg
-                        docker build -t nodemain:v1.0 .
+                  
+                        docker build -t ${IMAGE_NAME} .
                         '''
                     } else if (env.BRANCH_NAME == 'dev') {
                         // Copy dev logo.svg and build Docker image
                         sh '''
-                        cp ./logos/logo2.svg ../src/logo.svg
-                        docker build -t nodedev:v1.0 .
+                        cp path/to/dev/logo.svg path/to/app/logo.svg
+                        docker build -t ${IMAGE_NAME} .
                         '''
                     }
                 }
@@ -57,18 +67,14 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Stop and remove all previous containers
+                    // Stop and remove only the containers related to the current environment
                     sh '''
-                    docker stop $(docker ps -a -q) || true
-                    docker rm $(docker ps -a -q) || true
+                    docker stop $(docker ps -q --filter "name=${CONTAINER_NAME}") || true
+                    docker rm $(docker ps -a -q --filter "name=${CONTAINER_NAME}") || true
                     '''
 
                     // Run the new container
-                    if (env.BRANCH_NAME == 'main') {
-                        sh 'docker run -d --expose 3000 -p 3000:3000 nodemain:v1.0'
-                    } else if (env.BRANCH_NAME == 'dev') {
-                        sh 'docker run -d --expose 3001 -p 3001:3000 nodedev:v1.0'
-                    }
+                    sh "docker run -d --name ${CONTAINER_NAME} --expose ${PORT} -p ${PORT}:3000 ${IMAGE_NAME}"
                 }
             }
         }
