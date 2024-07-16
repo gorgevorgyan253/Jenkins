@@ -8,7 +8,7 @@ pipeline {
         stage('Setup NodeJS') {
             steps{
                 script {
-                    def nodeTool = tool name: env.NODE_VERSION, type: 'NodeJS'
+                    def nodeTool = tool name: env.NODE_VERSION
                     env.PATH = "${nodeTool}/bin:${env.PATH}"
                 }
         }
