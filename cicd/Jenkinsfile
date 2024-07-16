@@ -19,6 +19,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
+                     checkout scm
                     if (env.BRANCH_NAME == 'main') {
                         env.PORT = '3000'
                         env.IMAGE_NAME = 'nodemain'
@@ -29,7 +30,7 @@ pipeline {
                         env.CONTAINER_NAME = 'nodedev'
                     }
                 }
-                checkout scm
+               
             }
         }
         stage('Build') {
