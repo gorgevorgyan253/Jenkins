@@ -51,7 +51,7 @@ pipeline {
         docker {
           image 'docker:latest'
           args '-v /var/run/docker.sock:/var/run/docker.sock' // Allows Docker commands to access the host Docker daemon
-        }
+        }}
             steps {
                 script {
                     if (env.BRANCH_NAME == 'main') {
