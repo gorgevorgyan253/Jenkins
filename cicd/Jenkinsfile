@@ -1,0 +1,73 @@
+pipeline {
+    agent any
+    environment {
+        NODE_VERSION = 'nodejs' // Name of your NodeJS installation in Global Tool Configuration
+        PORT = ''
+    }
+    stages {
+        stage('Setup NodeJS') {
+            steps {
+                tool name: env.NODE_VERSION, type: 'NodeJS'
+            }
+        }
+        stage('Checkout') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == 'main') {
+                        PORT = '3000'
+                    } else if (env.BRANCH_NAME == 'dev') {
+                        PORT = '3001'
+                    }
+                }
+                checkout scm
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'npm test'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == 'main') {
+                        // Copy main logo.svg and build Docker image
+                        sh '''
+                        cp path/to/main/logo.svg path/to/app/logo.svg
+                        docker build -t nodemain:v1.0 .
+                        '''
+                    } else if (env.BRANCH_NAME == 'dev') {
+                        // Copy dev logo.svg and build Docker image
+                        sh '''
+                        cp path/to/dev/logo.svg path/to/app/logo.svg
+                        docker build -t nodedev:v1.0 .
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                script {
+                    // Stop and remove all previous containers
+                    sh '''
+                    docker stop $(docker ps -a -q) || true
+                    docker rm $(docker ps -a -q) || true
+                    '''
+
+                    // Run the new container
+                    if (env.BRANCH_NAME == 'main') {
+                        sh 'docker run -d --expose 3000 -p 3000:3000 nodemain:v1.0'
+                    } else if (env.BRANCH_NAME == 'dev') {
+                        sh 'docker run -d --expose 3001 -p 3001:3000 nodedev:v1.0'
+                    }
+                }
+            }
+        }
+    }
+}

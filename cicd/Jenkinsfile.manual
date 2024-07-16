@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+    environment {
+        NODE_VERSION = 'nodejs' // Name of your NodeJS installation in Global Tool Configuration
+        PORT = ''
+    }
+    parameters {
+        choice(name: 'BRANCH', choices: ['main', 'dev'], description: 'Branch to deploy')
+        string(name: 'IMAGE_TAG', defaultValue: 'v1.0', description: 'Docker image tag to deploy')
+    }
+    stages {
+        stage('Setup NodeJS') {
+            steps {
+                tool name: env.NODE_VERSION, type: 'NodeJS'
+            }
+        }
+        stage('Checkout') {
+            steps {
+                script {
+                    if (params.BRANCH == 'main') {
+                        PORT = '3000'
+                    } else if (params.BRANCH == 'dev') {
+                        PORT = '3001'
+                    }
+                }
+                checkout([$class: 'GitSCM', branches: [[name: "*/${params.BRANCH}"]], userRemoteConfigs: [[url: '<your-github-repo-url>', credentialsId: '<your-credentials-id>']]])
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    if (params.BRANCH == 'main') {
+                        // Copy main logo.svg and build Docker image
+                        sh '''
+                        cp path/to/main/logo.svg path/to/app/logo.svg
+                        docker build -t nodemain:${params.IMAGE_TAG} .
+                        '''
+                    } else if (params.BRANCH == 'dev') {
+                        // Copy dev logo.svg and build Docker image
+                        sh '''
+                        cp path/to/dev/logo.svg path/to/app/logo.svg
+                        docker build -t nodedev:${params.IMAGE_TAG} .
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                script {
+                    // Stop and remove all previous containers
+                    sh '''
+                    docker stop $(docker ps -a -q) || true
+                    docker rm $(docker ps -a -q) || true
+                    '''
+
+                    // Run the new container
+                    if (params.BRANCH == 'main') {
+                        sh "docker run -d --expose 3000 -p 3000:3000 nodemain:${params.IMAGE_TAG}"
+                    } else if (params.BRANCH == 'dev') {
+                        sh "docker run -d --expose 3001 -p 3001:3000 nodedev:${params.IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+    }
+}
