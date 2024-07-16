@@ -47,12 +47,16 @@ pipeline {
             }
         }
         stage('Build Docker Image') {
-
+ agent {
+        docker {
+          image 'docker:latest'
+          args '-v /var/run/docker.sock:/var/run/docker.sock' // Allows Docker commands to access the host Docker daemon
+        }
             steps {
                 script {
                     if (env.BRANCH_NAME == 'main') {
                         // Copy main logo.svg and build Docker image
-                            docker.build(env.IMAGE_NAME, '../')
+                           sh 'docker build -t ${IMAGE_NAME} .'
                  
                     } else if (env.BRANCH_NAME == 'dev') {
                         // Copy dev logo.svg and build Docker image
