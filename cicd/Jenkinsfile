@@ -46,22 +46,14 @@ pipeline {
             }
         }
         stage('Build Docker Image') {
-    
-                // Use Docker plugin to define Docker image and run inside it
-                agent {
-                    docker {
-                        // Specify Docker image to use
-                        image 'docker' // Replace with the Docker version you need
-                        args '-v /var/run/docker.sock:/var/run/docker.sock' // Mount Docker socket
-                    }
-                }
+
             steps {
                 script {
                     if (env.BRANCH_NAME == 'main') {
                         // Copy main logo.svg and build Docker image
                         sh '''
-                  
-                        docker build -t ${IMAGE_NAME} .
+                        docker.build("${env.IMAGE_NAME}")
+                 
                         '''
                     } else if (env.BRANCH_NAME == 'dev') {
                         // Copy dev logo.svg and build Docker image
