@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+      agent {
+        docker {
+                    image 'node:7.8' // Replace with the Docker version you need
+                    args '-v /var/run/docker.sock:/var/run/docker.sock' // Mount Docker socket
+                }
+        }
     environment {
         NODE_VERSION = 'nodejs' // Name of your NodeJS installation in Global Tool Configuration
         IMAGE_TAG = 'v1.0'
@@ -80,12 +85,6 @@ pipeline {
             }
         }
         stage('Deploy') {
-  agent {
-                docker {
-                    image 'docker' // Replace with the Docker version you need
-                    args '-v /var/run/docker.sock:/var/run/docker.sock' // Mount Docker socket
-                }
-            }
             steps {
                 script {
                     // Stop and remove only the containers related to the current environment
