@@ -1,8 +1,8 @@
 pipeline {
     agent any
     environment {
-        DOCKER_CREDENTIALS_ID = 'your-docker-credentials-id'
-        DOCKER_REGISTRY = 'your-docker-registry'
+        DOCKER_CREDENTIALS_ID = 'dockerhub'
+        DOCKER_REGISTRY = 'gevorgyan'
         IMAGE_NAME = 'nodedev'
         IMAGE_TAG = 'v1.0'
         CONTAINER_NAME = 'nodedev'
