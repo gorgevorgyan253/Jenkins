@@ -1,3 +1,8 @@
+@Library('shared-lib') _
+
+
+
+
 pipeline {
     agent any
     environment {
@@ -10,12 +15,8 @@ pipeline {
     }
 stages {
 stage('Setup Docker') {
-            steps {
-                script {
-                    def dockerTool = tool name: 'docker'
-                    env.PATH = "${dockerTool}/bin:${env.PATH}"
-                    sh 'docker -v' // Verify Docker version
-                }
+                    steps {
+                    dockerSetup()
             }
         }
         stage('Pull Docker Image') {
