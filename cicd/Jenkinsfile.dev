@@ -1,0 +1,36 @@
+pipeline {
+    agent any
+    environment {
+        DOCKER_CREDENTIALS_ID = 'your-docker-credentials-id'
+        DOCKER_REGISTRY = 'your-docker-registry'
+        IMAGE_NAME = 'nodedev'
+        IMAGE_TAG = 'v1.0'
+        CONTAINER_NAME = 'nodedev'
+        PORT = '3001'
+    }
+    stages {
+        stage('Pull Docker Image') {
+            agent { docker { image 'docker:latest' } }
+            steps {
+                withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin ${DOCKER_REGISTRY}
+                        docker pull ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                    """
+                }
+            }
+        }
+        stage('Deploy Docker Image') {
+            agent { docker { image 'docker:latest' } }
+            steps {
+                script {
+                    sh '''
+                        docker stop $(docker ps -q --filter "name=${CONTAINER_NAME}") || true
+                        docker rm $(docker ps -a -q --filter "name=${CONTAINER_NAME}") || true
+                    '''
+                    sh "docker run -d --name ${CONTAINER_NAME} --expose ${PORT} -p ${PORT}:3000 ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+                }
+            }
+        }
+    }
+}
