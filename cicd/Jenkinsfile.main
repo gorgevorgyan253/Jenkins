@@ -8,9 +8,18 @@ pipeline {
         CONTAINER_NAME = 'nodemain'
         PORT = '3000'
     }
+stage('Setup Docker') {
+            steps {
+                script {
+                    def dockerTool = tool name: 'docker'
+                    env.PATH = "${dockerTool}/bin:${env.PATH}"
+                    sh 'docker -v' // Verify Docker version
+                }
+            }
+        }
+
     stages {
         stage('Pull Docker Image') {
-            agent { docker { image 'docker:latest' } }
             steps {
                 withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh """
@@ -21,7 +30,6 @@ pipeline {
             }
         }
         stage('Deploy Docker Image') {
-            agent { docker { image 'docker:latest' } }
             steps {
                 script {
                     sh '''
