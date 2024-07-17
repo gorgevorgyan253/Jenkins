@@ -2,7 +2,7 @@
 pipeline {
     agent any
     environment {
-        NODE_VERSION = 'nodejs' // Name of your NodeJS installation in Global Tool Configuration
+        NODE_VERSION = 'nodejs'
         IMAGE_TAG = 'v1.0'
         DOCKER_CREDENTIALS_ID = 'dockerhub'
         DOCKER_REGISTRY = 'gevorgyan'
@@ -10,84 +10,66 @@ pipeline {
     stages {
         stage('Setup NodeJS') {
             steps {
-                  nodeSetup()
+                nodeSetup()
             }
         }
         stage('Checkout') {
             steps {
-
-                  checkoutCode()
-                }
+                checkoutCode()
+            }
         }
-        /*
         stage('Build') {
-
             steps {
                 script {
-                    sh 'npm install' // Install dependencies locally
+                    sh 'npm install'
                 }
             }
         }
         stage('Test') {
-
             steps {
                 script {
                     sh 'npm test'
                 }
             }
-        }*/
-
-
-
-
-
-
-
-
-
-        
-stage('Setup Docker') {
+        }
+        stage('Setup Docker') {
             steps {
-              dockerSetup()
+                dockerSetup()
             }
         }
-
-    stage('Lint Dockerfile') {
-        
+        stage('Lint Dockerfile') {
             steps {
- script {
+                script {
                     sh 'docker run --rm -i hadolint/hadolint < Dockerfile'
                 }
-
             }
         }
-
         stage('Build Docker Image') {
             steps {
-
-buildDockerImage()
-
+                script {
+                    buildDockerImage()
+                }
             }
         }
- stage('Vulnerability Scan') {
+        stage('Vulnerability Scan') {
             steps {
-
-vulnerabilityScan()
+                script {
+                    vulnerabilityScan()
+                }
             }
         }
-        
         stage('Push Docker Image') {
             steps {
                 withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                        
-                        docker login -u "${DOCKER_USER}" --password "${DOCKER_PASS}" 
-                        docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-                    """
+                    script {
+                        sh """
+                            docker login -u "${DOCKER_USER}" --password "${DOCKER_PASS}"
+                            docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                        """
+                    }
                 }
             }
         }
-
         stage('Trigger Deployment Pipelines') {
             steps {
                 script {
