@@ -68,7 +68,6 @@ stage('Setup Docker') {
             }
         }
         stage('Build Docker Image') {
-            agent { docker { image 'docker:latest' } }
             steps {
                 script {
                     if (env.BRANCH_NAME == 'main') {
@@ -98,7 +97,6 @@ stage('Setup Docker') {
             }
         }
         stage('Push Docker Image') {
-            agent { docker { image 'docker:latest' } }
             steps {
                 withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh """
