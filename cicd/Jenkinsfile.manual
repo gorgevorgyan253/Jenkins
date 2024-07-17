@@ -1,66 +1,40 @@
 pipeline {
     agent any
-    environment {
-        NODE_VERSION = 'nodejs' // Name of your NodeJS installation in Global Tool Configuration
-        PORT = ''
-        IMAGE_NAME = ''
-        CONTAINER_NAME = ''
-    }
     parameters {
-        choice(name: 'BRANCH', choices: ['main', 'dev'], description: 'Branch to deploy')
-        string(name: 'IMAGE_TAG', defaultValue: 'v1.0', description: 'Docker image tag to deploy')
+        choice(name: 'TARGET_ENV', choices: ['main', 'dev'], description: 'Choose the target environment')
+        string(name: 'IMAGE_TAG', defaultValue: 'v1.0', description: 'Tag of the Docker image to be deployed')
+    }
+    environment {
+        DOCKER_TOOL = 'docker'
     }
     stages {
-        stage('Setup NodeJS') {
+        stage('Setup Docker') {
             steps {
                 script {
-                    def nodeTool = tool name: env.NODE_VERSION
-                    env.PATH = "${nodeTool}/bin:${env.PATH}"
-                }
-            }
-        }
-        stage('Checkout') {
-            steps {
-                script {
-                    if (params.BRANCH == 'main') {
-                        PORT = '3000'
-                        IMAGE_NAME = "nodemain:${params.IMAGE_TAG}"
-                        CONTAINER_NAME = 'nodemain'
-                    } else if (params.BRANCH == 'dev') {
-                        PORT = '3001'
-                        IMAGE_NAME = "nodedev:${params.IMAGE_TAG}"
-                        CONTAINER_NAME = 'nodedev'
-                    }
-                }
-                checkout([$class: 'GitSCM', branches: [[name: "*/${params.BRANCH}"]], userRemoteConfigs: [[url: '<your-github-repo-url>', credentialsId: '<your-credentials-id>']]])
-            }
-        }
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    sh '''
-                    if (params.BRANCH == 'main') {
-                        cp path/to/main/logo.svg path/to/app/logo.svg
-                        docker build -t ${IMAGE_NAME} .
-                    } else if (params.BRANCH == 'dev') {
-                        cp path/to/dev/logo.svg path/to/app/logo.svg
-                        docker build -t ${IMAGE_NAME} .
-                    }
-                    '''
+                    def dockerTool = tool name: env.DOCKER_TOOL
+                    env.PATH = "${dockerTool}/bin:${env.PATH}"
+                    sh 'docker -v' // Verify Docker version
                 }
             }
         }
         stage('Deploy') {
             steps {
                 script {
-                    // Stop and remove only the containers related to the current environment
-                    sh '''
-                    docker stop $(docker ps -q --filter "name=${CONTAINER_NAME}") || true
-                    docker rm $(docker ps -a -q --filter "name=${CONTAINER_NAME}") || true
-                    '''
+                    if (params.TARGET_ENV == 'main') {
+                        env.PORT = '3000'
+                        env.IMAGE_NAME = 'nodemain'
+                        env.CONTAINER_NAME = 'nodemain'
+                    } else if (params.TARGET_ENV == 'dev') {
+                        env.PORT = '3001'
+                        env.IMAGE_NAME = 'nodedev'
+                        env.CONTAINER_NAME = 'nodedev'
+                    }
 
-                    // Run the new container
-                    sh "docker run -d --name ${CONTAINER_NAME} --expose ${PORT} -p ${PORT}:3000 ${IMAGE_NAME}"
+                    sh '''
+                        docker stop $(docker ps -q --filter "name=${CONTAINER_NAME}") || true
+                        docker rm $(docker ps -a -q --filter "name=${CONTAINER_NAME}") || true
+                    '''
+                    sh "docker run -d --name ${CONTAINER_NAME} --expose ${PORT} -p ${PORT}:3000 ${IMAGE_NAME}:${params.IMAGE_TAG}"
                 }
             }
         }
