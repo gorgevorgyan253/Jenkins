@@ -36,26 +36,26 @@ pipeline {
                 }
             }
         }*/
-// stage('Setup Docker') {
-//             steps {
-//               dockerSetup()
-//             }
-//         }
-
-    stage('Lint Dockerfile') {
-agent {
-                docker {
-                    image 'hadolint/hadolint' // Use the Hadolint image for linting
-                    label 'docker-linter'
-                }
-            }
-        
+stage('Setup Docker') {
             steps {
-                script {
-                      sh 'hadolint Dockerfile'
-                }
+              dockerSetup()
             }
         }
+
+//     stage('Lint Dockerfile') {
+// agent {
+//                 docker {
+//                     image 'hadolint/hadolint' // Use the Hadolint image for linting
+//                     label 'docker-linter'
+//                 }
+//             }
+        
+//             steps {
+//                 script {
+//                       sh 'hadolint Dockerfile'
+//                 }
+//             }
+//         }
 
         stage('Build Docker Image') {
             steps {
@@ -64,12 +64,12 @@ buildDockerImage()
 
             }
         }
-//  stage('Vulnerability Scan') {
-//             steps {
+ stage('Vulnerability Scan') {
+            steps {
 
-// vulnerabilityScan()
-//             }
-//         }
+vulnerabilityScan()
+            }
+        }
         
         stage('Push Docker Image') {
             steps {
