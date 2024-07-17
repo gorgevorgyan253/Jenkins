@@ -1,51 +1,74 @@
 pipeline {
     agent any
     environment {
-        NODE_VERSION = 'node' // Name of your NodeJS installation in Global Tool Configuration
-        PORT = ''
+        NODE_VERSION = 'nodejs' // Name of your NodeJS installation in Global Tool Configuration
+        IMAGE_TAG = 'v1.0'
     }
     stages {
         stage('Setup NodeJS') {
             steps {
-                tool name: env.NODE_VERSION, type: 'NodeJS'
+                script {
+                    def nodeTool = tool name: env.NODE_VERSION
+                    env.PATH = "${nodeTool}/bin:${env.PATH}"
+                    sh 'node -v' // Verify NodeJS version
+                    sh 'npm -v' // Verify NPM version
+                }
             }
         }
         stage('Checkout') {
             steps {
                 script {
+                    checkout scm
+                    echo "Branch name: ${env.BRANCH_NAME}"
                     if (env.BRANCH_NAME == 'main') {
-                        PORT = '3000'
+                        env.PORT = '3000'
+                        env.IMAGE_NAME = 'nodemain'
+                        env.CONTAINER_NAME = 'nodemain'
                     } else if (env.BRANCH_NAME == 'dev') {
-                        PORT = '3001'
+                        env.PORT = '3001'
+                        env.IMAGE_NAME = 'nodedev'
+                        env.CONTAINER_NAME = 'nodedev'
                     }
                 }
-                checkout scm
             }
         }
         stage('Build') {
             steps {
-                sh 'npm install'
+                script {
+                    sh 'npm install' // Install dependencies locally
+                }
             }
         }
         stage('Test') {
             steps {
-                sh 'npm test'
+                script {
+                    sh 'npm test'
+                }
+            }
+        }
+        stage('Setup Docker') {
+            steps {
+                script {
+                    def dockerTool = tool name: 'docker'
+                    env.PATH = "${dockerTool}/bin:${env.PATH}"
+                    sh 'docker -v' // Verify Docker version
+                }
             }
         }
         stage('Build Docker Image') {
             steps {
                 script {
                     if (env.BRANCH_NAME == 'main') {
-                        // Copy main logo.svg and build Docker image
                         sh '''
-                        cp ./logos/logo.svg ../src/logo.svg
-                        docker build -t nodemain:v1.0 .
+                            echo "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
+                            cp cicd/logos/logo.svg src/logo.svg
+                            docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
                         '''
                     } else if (env.BRANCH_NAME == 'dev') {
-                        // Copy dev logo.svg and build Docker image
                         sh '''
-                        cp ./logos/logo2.svg ../src/logo.svg
-                        docker build -t nodedev:v1.0 .
+                            echo "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
+                            cp cicd/logos/logo2.svg src/logo.svg
+                            docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
                         '''
                     }
                 }
@@ -54,18 +77,11 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Stop and remove all previous containers
                     sh '''
-                    docker stop $(docker ps -a -q) || true
-                    docker rm $(docker ps -a -q) || true
+                        docker stop $(docker ps -q --filter "name=${CONTAINER_NAME}") || true
+                        docker rm $(docker ps -a -q --filter "name=${CONTAINER_NAME}") || true
                     '''
-
-                    // Run the new container
-                    if (env.BRANCH_NAME == 'main') {
-                        sh 'docker run -d --expose 3000 -p 3000:3000 nodemain:v1.0'
-                    } else if (env.BRANCH_NAME == 'dev') {
-                        sh 'docker run -d --expose 3001 -p 3001:3000 nodedev:v1.0'
-                    }
+                    sh "docker run -d --name ${CONTAINER_NAME} --expose ${PORT} -p ${PORT}:3000 ${IMAGE_NAME}:${IMAGE_TAG}"
                 }
             }
         }
