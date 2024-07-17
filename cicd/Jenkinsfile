@@ -50,6 +50,17 @@ pipeline {
                 }
             }
         }
+stage('Setup Docker') {
+            steps {
+                script {
+                    def dockerTool = tool name: 'docker'
+                    env.PATH = "${dockerTool}/bin:${env.PATH}"
+                    sh 'docker -v' // Verify Docker version
+                }
+            }
+        }
+
+        
         stage('Lint Dockerfile') {
             agent { docker { image 'hadolint/hadolint' } }
             steps {
