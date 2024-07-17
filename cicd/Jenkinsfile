@@ -64,6 +64,8 @@ pipeline {
                     script {
                         sh """
                             docker login -u "${DOCKER_USER}" --password "${DOCKER_PASS}"
+                            export DOCKER_CLIENT_TIMEOUT=300
+                            export COMPOSE_HTTP_TIMEOUT=300
                             docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
                         """
                     }
