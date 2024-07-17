@@ -1,5 +1,5 @@
 pipeline {
-      agent any
+    agent any
     environment {
         NODE_VERSION = 'nodejs' // Name of your NodeJS installation in Global Tool Configuration
         IMAGE_TAG = 'v1.0'
@@ -10,19 +10,19 @@ pipeline {
                 script {
                     def nodeTool = tool name: env.NODE_VERSION
                     env.PATH = "${nodeTool}/bin:${env.PATH}"
+                    sh 'node -v' // Verify NodeJS version
+                    sh 'npm -v' // Verify NPM version
                 }
             }
         }
         stage('Checkout') {
             steps {
                 script {
-                     checkout scm
-                     echo "Branch name: ${env.BRANCH_NAME}" 
+                    checkout scm
+                    echo "Branch name: ${env.BRANCH_NAME}"
                     if (env.BRANCH_NAME == 'main') {
-                        echo "Branch name again : ${env.BRANCH_NAME}" 
                         env.PORT = '3000'
                         env.IMAGE_NAME = 'nodemain'
-                        IMAGE_NAME = 'nodemain'
                         env.CONTAINER_NAME = 'nodemain'
                     } else if (env.BRANCH_NAME == 'dev') {
                         env.PORT = '3001'
@@ -30,13 +30,12 @@ pipeline {
                         env.CONTAINER_NAME = 'nodedev'
                     }
                 }
-               
             }
         }
         stage('Build') {
             steps {
                 script {
-                    sh 'npm install'
+                    sh 'npm install' // Install dependencies locally
                 }
             }
         }
@@ -52,25 +51,19 @@ pipeline {
                 script {
                     def dockerTool = tool name: 'docker'
                     env.PATH = "${dockerTool}/bin:${env.PATH}"
+                    sh 'docker -v' // Verify Docker version
                 }
             }
         }
         stage('Build Docker Image') {
-              agent {
-                docker {
-                    image 'docker' // Replace with the Docker version you need
-                    args '-v /var/run/docker.sock:/var/run/docker.sock' // Mount Docker socket
-                }
-            }
             steps {
                 script {
                     if (env.BRANCH_NAME == 'main') {
                         sh '''
-                            echo "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}" # Debugging line
+                            echo "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
                             docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
                         '''
                     } else if (env.BRANCH_NAME == 'dev') {
-                        // Copy dev logo.svg and build Docker image
                         sh '''
                             cp path/to/dev/logo.svg path/to/app/logo.svg
                             docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
@@ -82,13 +75,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Stop and remove only the containers related to the current environment
                     sh '''
                         docker stop $(docker ps -q --filter "name=${CONTAINER_NAME}") || true
                         docker rm $(docker ps -a -q --filter "name=${CONTAINER_NAME}") || true
                     '''
-
-                    // Run the new container
                     sh "docker run -d --name ${CONTAINER_NAME} --expose ${PORT} -p ${PORT}:3000 ${IMAGE_NAME}:${IMAGE_TAG}"
                 }
             }
