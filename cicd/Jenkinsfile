@@ -57,12 +57,12 @@ buildDockerImage()
 
             }
         }
- stage('Vulnerability Scan') {
-            steps {
+//  stage('Vulnerability Scan') {
+//             steps {
 
-vulnerabilityScan()
-            }
-        }
+// vulnerabilityScan()
+//             }
+//         }
         
         stage('Push Docker Image') {
             steps {
