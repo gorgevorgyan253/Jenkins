@@ -36,20 +36,6 @@ pipeline {
                 }
             }
         }*/
-    stage('Lint Dockerfile') {
-agent {
-                docker {
-                    image 'hadolint/hadolint' // Use the Hadolint image for linting
-                }
-            }
-        
-            steps {
-                script {
-                      sh 'hadolint Dockerfile'
-                }
-            }
-        }
-
 
 
 
@@ -66,20 +52,15 @@ stage('Setup Docker') {
             }
         }
 
-//     stage('Lint Dockerfile') {
-// agent {
-//                 docker {
-//                     image 'hadolint/hadolint' // Use the Hadolint image for linting
-//                     label 'docker-linter'
-//                 }
-//             }
+    stage('Lint Dockerfile') {
         
-//             steps {
-//                 script {
-//                       sh 'hadolint Dockerfile'
-//                 }
-//             }
-//         }
+            steps {
+ script {
+                    sh 'docker run --rm -i hadolint/hadolint < Dockerfile'
+                }
+
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
