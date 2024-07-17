@@ -1,38 +1,27 @@
+@Library('shared-lib') _
 pipeline {
     agent any
     environment {
         NODE_VERSION = 'nodejs' // Name of your NodeJS installation in Global Tool Configuration
         IMAGE_TAG = 'v1.0'
+        DOCKER_CREDENTIALS_ID = 'dockerhub'
+        DOCKER_REGISTRY = 'gevorgyan'
     }
     stages {
         stage('Setup NodeJS') {
             steps {
-                script {
-                    def nodeTool = tool name: env.NODE_VERSION
-                    env.PATH = "${nodeTool}/bin:${env.PATH}"
-                    sh 'node -v' // Verify NodeJS version
-                    sh 'npm -v' // Verify NPM version
-                }
+                  nodeSetup()
             }
         }
         stage('Checkout') {
             steps {
-                script {
-                    checkout scm
-                    echo "Branch name: ${env.BRANCH_NAME}"
-                    if (env.BRANCH_NAME == 'main') {
-                        env.PORT = '3000'
-                        env.IMAGE_NAME = 'nodemain'
-                        env.CONTAINER_NAME = 'nodemain'
-                    } else if (env.BRANCH_NAME == 'dev') {
-                        env.PORT = '3001'
-                        env.IMAGE_NAME = 'nodedev'
-                        env.CONTAINER_NAME = 'nodedev'
-                    }
+
+                  checkoutCode()
                 }
-            }
         }
+        /*
         stage('Build') {
+
             steps {
                 script {
                     sh 'npm install' // Install dependencies locally
@@ -40,48 +29,73 @@ pipeline {
             }
         }
         stage('Test') {
+
             steps {
                 script {
                     sh 'npm test'
                 }
             }
-        }
-        stage('Setup Docker') {
+        }*/
+
+
+
+
+
+
+
+
+
+        
+stage('Setup Docker') {
             steps {
-                script {
-                    def dockerTool = tool name: 'docker'
-                    env.PATH = "${dockerTool}/bin:${env.PATH}"
-                    sh 'docker -v' // Verify Docker version
+              dockerSetup()
+            }
+        }
+
+    stage('Lint Dockerfile') {
+        
+            steps {
+ script {
+                    sh 'docker run --rm -i hadolint/hadolint < Dockerfile'
+                }
+
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+
+buildDockerImage()
+
+            }
+        }
+ stage('Vulnerability Scan') {
+            steps {
+
+vulnerabilityScan()
+            }
+        }
+        
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        
+                        docker login -u "${DOCKER_USER}" --password "${DOCKER_PASS}" 
+                        docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                    """
                 }
             }
         }
-        stage('Build Docker Image') {
+
+        stage('Trigger Deployment Pipelines') {
             steps {
                 script {
                     if (env.BRANCH_NAME == 'main') {
-                        sh '''
-                            echo "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
-                            cp cicd/logos/logo.svg src/logo.svg
-                            docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                        '''
+                        build job: 'Deploy_to_main', wait: false
                     } else if (env.BRANCH_NAME == 'dev') {
-                        sh '''
-                            echo "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
-                            cp cicd/logos/logo2.svg src/logo.svg
-                            docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                        '''
+                        build job: 'Deploy_to_dev', wait: false
                     }
-                }
-            }
-        }
-        stage('Deploy') {
-            steps {
-                script {
-                    sh '''
-                        docker stop $(docker ps -q --filter "name=${CONTAINER_NAME}") || true
-                        docker rm $(docker ps -a -q --filter "name=${CONTAINER_NAME}") || true
-                    '''
-                    sh "docker run -d --name ${CONTAINER_NAME} --expose ${PORT} -p ${PORT}:3000 ${IMAGE_NAME}:${IMAGE_TAG}"
                 }
             }
         }
