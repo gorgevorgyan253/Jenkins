@@ -35,7 +35,7 @@ pipeline {
             }
         }
         stage('Build') {
-            agent { docker { image 'node:latest' } }
+
             steps {
                 script {
                     sh 'npm install' // Install dependencies locally
@@ -43,7 +43,7 @@ pipeline {
             }
         }
         stage('Test') {
-            agent { docker { image 'node:latest' } }
+
             steps {
                 script {
                     sh 'npm test'
