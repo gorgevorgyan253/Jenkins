@@ -36,6 +36,30 @@ pipeline {
                 }
             }
         }*/
+    stage('Lint Dockerfile') {
+agent {
+                docker {
+                    image 'hadolint/hadolint' // Use the Hadolint image for linting
+                }
+            }
+        
+            steps {
+                script {
+                      sh 'hadolint Dockerfile'
+                }
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+        
 stage('Setup Docker') {
             steps {
               dockerSetup()
