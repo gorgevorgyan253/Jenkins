@@ -8,13 +8,21 @@ pipeline {
         CONTAINER_NAME = 'nodedev'
         PORT = '3001'
     }
-    stages {
+stages {
+stage('Setup Docker') {
+            steps {
+                script {
+                    def dockerTool = tool name: 'docker'
+                    env.PATH = "${dockerTool}/bin:${env.PATH}"
+                    sh 'docker -v' // Verify Docker version
+                }
+            }
+        }
         stage('Pull Docker Image') {
-            agent { docker { image 'docker:latest' } }
             steps {
                 withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh """
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin ${DOCKER_REGISTRY}
+                        docker login -u "$DOCKER_USER" --password-stdin "$DOCKER_PASS"
                         docker pull ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
                     """
                 }
