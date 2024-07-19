@@ -61,10 +61,9 @@ pipeline {
         }
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    script {
+                script {
+                    withDockerRegistry([ credentialsId: env.DOCKER_CREDENTIALS_ID, url: "" ]) {
                         sh """
-                            docker login -u "${DOCKER_USER}" --password "${DOCKER_PASS}"
                             export DOCKER_CLIENT_TIMEOUT=300
                             export COMPOSE_HTTP_TIMEOUT=300
                             docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
@@ -88,11 +87,12 @@ pipeline {
                 }
                 stage('Pull Docker Image') {
                     steps {
-                        withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                            sh """
-                                docker login -u "${DOCKER_USER}" --password "${DOCKER_PASS}"
-                                docker pull ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-                            """
+                        script {
+                            withDockerRegistry([ credentialsId: env.DOCKER_CREDENTIALS_ID, url: "" ]) {
+                                sh """
+                                    docker pull ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                                """
+                            }
                         }
                     }
                 }
